@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class CameraFollow : MonoBehaviour {
-
+    /*
     public Controller_2D target;
-    //public BoxCollider2D boundBox;
+    public BoxCollider2D boundBox;
 
     public float verticalOffset;
 
@@ -33,7 +33,7 @@ public class CameraFollow : MonoBehaviour {
 
     public static CameraFollow instance;
 
-    private GameSceneManager gm;
+    private GameManager gm;
 
     void Awake()
     {
@@ -45,7 +45,7 @@ public class CameraFollow : MonoBehaviour {
         {
             instance = this;
         }
-        gm = FindObjectOfType<GameSceneManager>();
+        gm = FindObjectOfType<GameManager>();
     }
     #endregion
 
@@ -53,8 +53,8 @@ public class CameraFollow : MonoBehaviour {
     {
         target = gm.player.GetComponent<Controller_2D>();
         focusArea = new FocusArea(target.GetComponent<Collider2D>().bounds, focusAreaSize);
-        //minBounds = boundBox.bounds.min;
-        //maxBounds = boundBox.bounds.max;
+        minBounds = boundBox.bounds.min;
+        maxBounds = boundBox.bounds.max;
         theCamera = GetComponent<Camera>();
         halfHeight = theCamera.orthographicSize;
         halfWidth = halfHeight * Screen.width /Screen.height;
@@ -90,11 +90,11 @@ public class CameraFollow : MonoBehaviour {
         focusPosition += Vector2.right * currentLookAheadX;
         transform.position = (Vector3)focusPosition + Vector3.forward *-10;
 
-        //transform.position = new Vector3(
-            // Mathf.Clamp(transform.position.x, minBounds.x + halfWidth, maxBounds.x - halfWidth),
-            // Mathf.Clamp(transform.position.y, minBounds.y + halfHeight, maxBounds.y - halfHeight),
-            // transform.position.z
-        // );
+        transform.position = new Vector3(
+             Mathf.Clamp(transform.position.x, minBounds.x + halfWidth, maxBounds.x - halfWidth),
+             Mathf.Clamp(transform.position.y, minBounds.y + halfHeight, maxBounds.y - halfHeight),
+             transform.position.z
+            );
 
     }
 
@@ -152,4 +152,5 @@ public class CameraFollow : MonoBehaviour {
         }
 
     }
+    */
 }

@@ -7,11 +7,11 @@ public class EnemyHitBox : MonoBehaviour
     Player player;
     public Vector2 knockback;
     public float damageDealt;
-    private GameSceneManager gm;
+    private GameManager gm;
 
     private void Awake()
     {
-        gm = FindObjectOfType<GameSceneManager>();
+        gm = FindObjectOfType<GameManager>();
     }
     void Start()
     {
@@ -22,9 +22,7 @@ public class EnemyHitBox : MonoBehaviour
     {
         if (collision.isTrigger != true && collision.tag == "Player")
         {
-            player.Knockback(Vector3.Normalize(player.transform.position - transform.position), knockback);
-            player.DealDamage(damageDealt);
-
+            player.DealDamage(damageDealt, Vector3.Normalize(player.transform.position - transform.position));
         }
     }
 }

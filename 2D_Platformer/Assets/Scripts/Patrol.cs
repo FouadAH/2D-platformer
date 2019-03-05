@@ -37,12 +37,12 @@ public class Patrol : StateMachineBehaviour
 
     override public void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
-        hit = Physics2D.Raycast(animator.transform.position + Vector3.right / 2f * directionX, Vector3.down, .5f + animator.transform.localScale.y, controller.collitionMask);
+        hit = Physics2D.Raycast(animator.transform.position + Vector3.right / 2f * directionX, Vector3.down, .5f + animator.transform.parent.localScale.y, controller.collitionMask);
         Flip();
         CalculateVelocity();
         controller.Move(velocity * Time.deltaTime);
     }
-
+   
     override public void OnStateExit(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
 
@@ -82,6 +82,7 @@ public class Patrol : StateMachineBehaviour
             enemy.transform.localScale = new Vector2(1, 1);
         }
     }
+
 
 
 

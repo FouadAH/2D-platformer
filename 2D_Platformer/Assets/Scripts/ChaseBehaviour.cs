@@ -39,7 +39,7 @@ public class ChaseBehaviour : StateMachineBehaviour
     
     override public void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
-        hit = Physics2D.Raycast(animator.transform.position + Vector3.right / 2f * directionX, Vector3.down, .5f + animator.transform.localScale.y, controller.collitionMask);
+        hit = Physics2D.Raycast(animator.transform.position + Vector3.right / 2f * directionX, Vector3.down, .5f + animator.transform.parent.localScale.y, controller.collitionMask);
         directionX = (animator.transform.position.x < playerTransfrom.position.x) ? 1 : -1;
         Flip();
         CalculateVelocity();

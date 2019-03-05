@@ -41,11 +41,11 @@ public class Flying_Enemy : MonoBehaviour
     float playerX;
     float playerY;
 
-    GameSceneManager gm;
+    GameManager gm;
 
     private void Awake()
     {
-        gm = FindObjectOfType<GameSceneManager>();
+        gm = FindObjectOfType<GameManager>();
     }
     void Start()
     {
@@ -203,9 +203,7 @@ public class Flying_Enemy : MonoBehaviour
     {
         if (collision.isTrigger != true && collision.tag == "Player")
         {
-            player.Knockback(Vector3.Normalize(player.transform.position - transform.position), knockback);
-            player.DealDamage(damageDealt);
-
+            player.DealDamage(damageDealt, Vector3.Normalize(player.transform.position - transform.position));
         }
     }
 }

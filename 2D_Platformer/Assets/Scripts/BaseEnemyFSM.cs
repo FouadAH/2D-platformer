@@ -13,7 +13,7 @@ public class BaseEnemyFSM : StateMachineBehaviour
     // OnStateEnter is called when a transition starts and the state machine starts to evaluate this state
     override public void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
     {
-        player = FindObjectOfType<GameSceneManager>().player.GetComponent<Player>();
+        player = FindObjectOfType<GameManager>().player.GetComponent<Player>();
         playerTransfrom = player.transform;
         enemy = animator.gameObject;
         controller = enemy.GetComponent<Controller_2D>();

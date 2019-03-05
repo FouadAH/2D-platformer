@@ -1,14 +1,37 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using UnityEngine.SceneManagement;
 using UnityEngine;
 
 public class Checkpoint: MonoBehaviour {
 
+    [SerializeField]private Animator prompt;
+    private int levelIndex;
+
+    private void Start()
+    {
+        levelIndex = gameObject.scene.buildIndex;
+    }
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.gameObject.tag.Equals("Player"))
         {
-            GameSceneManager.instance.lastCheckpointPosition = gameObject.transform.position;
+            prompt.SetTrigger("PopIn");
+        }
+    }
+
+    private void OnTriggerStay2D(Collider2D collision)
+    {
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            GameManager.instance.lastCheckpointLevelIndex = levelIndex;
+            GameManager.instance.lastCheckpointPos = transform.position;
+        }
+    }
+
+    private void OnTriggerExit2D(Collider2D collision)
+    {
+        if (collision.gameObject.tag.Equals("Player"))
+        {
+            prompt.SetTrigger("PopOut");
         }
     }
 }

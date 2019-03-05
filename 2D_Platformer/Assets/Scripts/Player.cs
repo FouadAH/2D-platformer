@@ -43,7 +43,7 @@ public class Player : MonoBehaviour {
     public float dashFactor = 10;
 
     public int damage;
-    public  float attackCooldown;
+    public float attackCooldown;
     public LayerMask enemyMask;
     public Vector2 swordKnockback;
     public Vector2 facingDir;
@@ -51,7 +51,7 @@ public class Player : MonoBehaviour {
     float iFrames = 0f;
     float iFrameTime = 1f;
     bool invinsible = false;
-    
+
     Vector2 directionalInput;
 
     SpriteRenderer sprite;
@@ -69,7 +69,7 @@ public class Player : MonoBehaviour {
     public float aggroRange;
     public int currency;
 
-    [SerializeField] private GameSceneManager gm;
+    [SerializeField] private GameManager gm;
     public float dashCooldown = .3f;
     private bool canDash = false;
     private float targetVelocityX;
@@ -78,13 +78,12 @@ public class Player : MonoBehaviour {
     private bool hasLanded = false;
     private bool takingInput;
 
-    private void Awake()
+    [SerializeField] private ParticleSystem afterImage;
+    
+    void Start ()
     {
-        
-    }
-    void Start () {
-
-        gm = FindObjectOfType<GameSceneManager>();
+        afterImage.Pause();
+        gm = FindObjectOfType<GameManager>();
         anim = GetComponent<Animator>();
         sprite = GetComponent<SpriteRenderer>();
         controller = GetComponent<Controller_2D>();
@@ -152,10 +151,12 @@ public class Player : MonoBehaviour {
             if(directionalInput.x < 0)
             {
                 transform.localScale = new Vector2(-1, 1);
+                afterImage.transform.localScale = new Vector2(-2, 2);
             }
             else if (directionalInput.x > 0)
             {
                 transform.localScale = new Vector2(1, 1);
+                afterImage.transform.localScale = new Vector2(2, 2);
             }
         }
 
@@ -244,7 +245,9 @@ public class Player : MonoBehaviour {
     {
         dashLock = true;
         dashHover = true;
+        afterImage.Play();
         yield return new WaitForSeconds(dashCooldown);
+        afterImage.Stop();
         dashHover = false;
         yield return new WaitWhile(() => airborne);
         dashLock = false;
@@ -324,22 +327,19 @@ public class Player : MonoBehaviour {
 
     public void Knockback(Vector3 dir, Vector2 kockbackDistance)
     {
-        if (!invinsible)
-        {
-            velocity = Vector3.zero;
-            velocity.x += dir.x * kockbackDistance.x;
-            velocity.y += dir.y * kockbackDistance.y;
-        }
-        
+        velocity = Vector3.zero;
+        velocity.x += dir.x * kockbackDistance.x;
+        velocity.y += dir.y * kockbackDistance.y;
     }
 
-    public void DealDamage(float damage)
+    public void DealDamage(float damage, Vector3 dir)
     {
         if (!invinsible)
         {
             iFrames = iFrameTime;
             invinsible = true;
             gm.health -= damage;
+            Knockback(dir, swordKnockback);
             CheckDeath();
         }
         
@@ -350,7 +350,11 @@ public class Player : MonoBehaviour {
         if (gm.health <= 0)
         {
             gm.health = gm.maxHealth;
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+            //play death animation
+            //load screen
+            SceneManager.UnloadSceneAsync(SceneManager.GetActiveScene());
+            SceneManager.LoadScene(gm.lastCheckpointLevelIndex, LoadSceneMode.Additive);
+            transform.position = gm.lastCheckpointPos;
         }
     }
 

@@ -7,59 +7,51 @@ using UnityEngine.UI;
 [RequireComponent(typeof(Controller_2D))]
 public class BaseEnemy : MonoBehaviour
 {
-
     Controller_2D controller;
 
     Player player;
     Transform playerTransfrom;
     public LayerMask viewMask;
 
-    private Vector2 attackPos;
-    public LayerMask playerMask;
+    [SerializeField] private Vector2 attackPos;
+    [SerializeField] private LayerMask playerMask;
 
-    public float lookRadius;
-    public float attackRange;
+    [SerializeField] private float lookRadius;
+    [SerializeField] private float attackRange;
 
-    public float waitTime;
+    [SerializeField] private float waitTime;
 
     float Health;
-    public float maxHealth;
+    [SerializeField] private float maxHealth;
 
-    public Vector2 knockback;
+    [SerializeField] private Vector2 knockback;
 
     [HideInInspector]
-    public Vector3 velocity;
-    
-    public float accelerationTimeGrounded = .2f;
-
-    public float moveSpeed = 5;
-
-    public float gravity = -10;
-    public float viewDistance = 5f;
+    [SerializeField] private Vector3 velocity;
+   
     RaycastHit2D hit;
 
     SpriteRenderer sprite;
-    Color colorStart = Color.white;
-    Color colorEnd = Color.red;
     public float damageDealt;
 
     Animator anim;
 
-    public Canvas canvas;
-    public Slider healthSlider;
+    [SerializeField] private Canvas canvas;
+    [SerializeField] private Slider healthSlider;
 
     public bool isAggro = false;
     public bool inRange = false;
+    public bool isDead = false;
     private readonly float flashTime = 0.3f;
 
     public int coinDrop;
     public GameObject coinPrefab;
 
-    public GameSceneManager gm;
+    public GameManager gm;
 
     private void Awake()
     {
-        gm = FindObjectOfType<GameSceneManager>();
+        gm = FindObjectOfType<GameManager>();
     }
 
     void Start()
@@ -77,7 +69,7 @@ public class BaseEnemy : MonoBehaviour
     private void Update()
     {
         InAttackRange();
-        if (isAggro)
+        if (isAggro && !isDead)
         {
             anim.SetBool("isChasing", true);
             anim.SetBool("isPatroling", false);
@@ -87,7 +79,7 @@ public class BaseEnemy : MonoBehaviour
             anim.SetBool("isChasing", false);
             anim.SetBool("isPatroling", true);
         }
-        if (inRange)
+        if (inRange && !isDead)
         {
             anim.SetBool("Attack",true);
         }
@@ -108,7 +100,7 @@ public class BaseEnemy : MonoBehaviour
 
     public void InAttackRange()
     {
-        Collider2D playerCollider = Physics2D.OverlapCircle(transform.position, attackRange, playerMask);
+        Collider2D playerCollider = Physics2D.OverlapCircle(new Vector2(transform.position.x + (attackPos.x*transform.localScale.x), transform.position.y + (attackPos.y * transform.localScale.y)), attackRange, playerMask);
         inRange = (playerCollider != null);
     }
 
@@ -119,21 +111,30 @@ public class BaseEnemy : MonoBehaviour
         velocity += 20 * Vector3.Normalize(transform.position - player.transform.position);
         Health -= dmg;
         healthSlider.value = CalculateHealthPercent();
-        StartCoroutine(Flash());
-        sprite.material.color = Color.Lerp(colorStart, colorEnd, Mathf.PingPong(.5f, 1));
+        //StartCoroutine(Flash());
+        //sprite.material.color = Color.Lerp(colorStart, colorEnd, Mathf.PingPong(.5f, 1));
+        anim.SetTrigger("Hit");
         if (Health <= 0)
         {
-            CoinSpawner();
-            Destroy(gameObject);
+            StartCoroutine(Die());
         }
     }
-
+    private IEnumerator Die()
+    {
+        isDead = true;
+        anim.SetBool("isDead", true);
+        CoinSpawner();
+        yield return new WaitForSeconds(anim.GetCurrentAnimatorStateInfo(0).length);
+        Destroy(gameObject);
+    }
+    /*
     public IEnumerator Flash()
     {
         sprite.material.color = colorEnd;
         yield return new WaitForSeconds(flashTime);
         sprite.material.color = colorStart;
     }
+    */
     private float CalculateHealthPercent()
     {
         return Health / maxHealth;
@@ -142,16 +143,14 @@ public class BaseEnemy : MonoBehaviour
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, attackRange);
+        Gizmos.DrawWireSphere(new Vector2(transform.position.x + (attackPos.x * transform.localScale.x), transform.position.y + (attackPos.y * transform.localScale.y)), attackRange);
     }
 
     private void OnTriggerStay2D(Collider2D collision)
     {
         if (collision.isTrigger != true && collision.tag == "Player")
         {
-            player.Knockback(Vector3.Normalize(player.transform.position - transform.position), knockback);
-            player.DealDamage(damageDealt);
-
+            player.DealDamage(damageDealt, Vector3.Normalize(player.transform.position - transform.position));
         }
     }
 }

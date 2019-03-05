@@ -4,8 +4,8 @@ using UnityEngine;
 
 public class Coin : MonoBehaviour
 {
-    [SerializeField] private float upForce = 1f;
-    [SerializeField] private float sideForce = 1f;
+    [SerializeField] private float upForce = 3f;
+    [SerializeField] private float sideForce = 3f;
     [SerializeField] private int value = 1;
 
     void Start()
@@ -19,7 +19,7 @@ public class Coin : MonoBehaviour
     {
         if (collider.tag == "Player")
         {
-            GameSceneManager.instance.currency += value;
+            GameManager.instance.currency += value;
             Destroy(gameObject);
         }
     }

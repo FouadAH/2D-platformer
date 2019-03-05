@@ -25,7 +25,7 @@ public class UI_HUD : MonoBehaviour
 
     void Update()
     {
-        currencyText.SetText(GameSceneManager.instance.currency.ToString());
+        currencyText.SetText(GameManager.instance.currency.ToString());
         healthSlider.value = CalculateHealthPercent();
         healthSliderGhost.value = Mathf.MoveTowards(previousHealthPercent, CalculateHealthPercent(), (1f / 5f) * Time.deltaTime);
         previousHealthPercent = healthSliderGhost.value;
@@ -33,6 +33,6 @@ public class UI_HUD : MonoBehaviour
 
     private float CalculateHealthPercent()
     {
-        return GameSceneManager.instance.health / GameSceneManager.instance.maxHealth;
+        return GameManager.instance.health / GameManager.instance.maxHealth;
     }
 }
