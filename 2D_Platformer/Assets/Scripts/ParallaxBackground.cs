@@ -10,7 +10,7 @@ public class ParallaxBackground : MonoBehaviour
     void Start()
     {
         if (parallaxCamera == null)
-            parallaxCamera = GameManager.instance.camera;
+            parallaxCamera = GameManager.instance.camera.GetComponent<ParallaxCamera>();
         if (parallaxCamera != null)
             parallaxCamera.onCameraTranslate += Move;
         SetLayers();
@@ -34,7 +34,7 @@ public class ParallaxBackground : MonoBehaviour
     {
         foreach (ParallaxLayer layer in parallaxLayers)
         {
-            layer.Move(delta);
+            if(layer!=null)layer.Move(delta);
         }
     }
 }

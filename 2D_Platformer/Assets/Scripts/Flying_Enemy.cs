@@ -2,201 +2,156 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.UI;
 
 [RequireComponent(typeof(Controller_2D))]
 public class Flying_Enemy : MonoBehaviour
 {
-
     Controller_2D controller;
 
     Player player;
     Transform playerTransfrom;
     public LayerMask viewMask;
 
-    public float lookRadius;
-    float distance;
+    [SerializeField] private Vector2 attackPos;
+    [SerializeField] private LayerMask playerMask;
 
-    public Transform pathHolder;
-    Vector3[] waypoints;
+    [SerializeField] private float lookRadius;
+    [SerializeField] private float attackRange;
 
-    public float waitTime;
+    [SerializeField] private float waitTime;
 
     float Health;
-    public float maxHealth;
+    [SerializeField] private float maxHealth;
+
+    [SerializeField] private Vector2 knockback;
 
     [HideInInspector]
-    public Vector3 velocity;
+    [SerializeField] private Vector3 velocity;
 
-    public Vector2 knockback;
+    RaycastHit2D hit;
 
-    float velocityXSmoothing;
-    float velocityYSmoothing;
-    
-    public float accelerationTime = .2f;
+    SpriteRenderer sprite;
+    public float damageDealt;
 
-    public float moveSpeed = 5;
-    
-    float directionX = 1;
-    float directionY = 1;
-    float playerX;
-    float playerY;
+    Animator anim;
 
-    GameManager gm;
+    [SerializeField] private Canvas canvas;
+    [SerializeField] private Slider healthSlider;
+
+    public bool isAggro = false;
+    public bool inRange = false;
+    public bool isDead = false;
+    private readonly float flashTime = 0.3f;
+
+    public int coinDrop;
+    public GameObject coinPrefab;
+
+    public GameManager gm;
+
+    public Vector2 flyPos;
+    public float flyRange;
 
     private void Awake()
     {
         gm = FindObjectOfType<GameManager>();
     }
+
     void Start()
     {
-        sprite = GetComponent<Renderer>();
+        flyPos = transform.position;
+        anim = GetComponent<Animator>();
+        sprite = GetComponent<SpriteRenderer>();
         player = gm.player.GetComponent<Player>();
         playerTransfrom = player.transform;
         Health = maxHealth;
         controller = GetComponent<Controller_2D>();
-        waypoints = new Vector3[pathHolder.childCount];
-        for (int i = 0; i < pathHolder.childCount; i++)
-        {
-            waypoints[i] = pathHolder.GetChild(i).position;
-        }
-        StartCoroutine(AutoMove());
-
+        healthSlider.value = CalculateHealthPercent();
+        canvas.enabled = false;
     }
 
     private void Update()
     {
-        distance = Vector2.Distance(playerTransfrom.position, transform.position);
-        playerX = (transform.position.x < playerTransfrom.position.x) ? 1 : -1;
-        playerY = (transform.position.y < playerTransfrom.position.y) ? 1 : -1;
-
-        if (CanSeePlayer())
+        InAttackRange();
+        if (isAggro && !isDead)
         {
-            isPaused = true;
-            Aggro();
+            anim.SetBool("isChasing", true);
+            anim.SetBool("isPatroling", false);
         }
         else
         {
-            isPaused = false;
+            anim.SetBool("isChasing", false);
+            anim.SetBool("isPatroling", true);
         }
-
-        CalculateVelocity();
-        controller.Move(velocity * Time.deltaTime);
-        pathHolder.position = new Vector3(pathHolder.position.x, transform.position.y, 0);
-    }
-
-    IEnumerator AutoMove()
-    {
-        while (true)
+        if (inRange && !isDead)
         {
-            if (isPaused)
-            {
-                yield return null;
-            }
-            if (controller.collitions.above || controller.collitions.below )
-            {
-                directionY *= -1;
-                velocity.y = 0;
-            }
-            if ( controller.collitions.left || controller.collitions.right)
-            {
-                directionX *= -1;
-                velocity.x = 0;
-            }
-            yield return null;
+            anim.SetBool("Shoot", true);
         }
-    }
-
-    bool isPaused = false;
-    int targetWayPointIndex = 0;
-    IEnumerator FollowPath(Vector3[] waypoints)
-    {
-        Vector3 targetWaypoint = waypoints[targetWayPointIndex];
-        directionX = (transform.position.x < targetWaypoint.x) ? 1 : -1;
-
-        while (true)
+        else
         {
-            if (isPaused)
-            {
-                yield return null;
-            }
-            else if ((transform.position.x >= targetWaypoint.x && directionX == 1) || (transform.position.x <= targetWaypoint.x && directionX == -1))
-            {
-                velocity.x = 0;
-                targetWayPointIndex = (targetWayPointIndex + 1) % waypoints.Length;
-                targetWaypoint = waypoints[targetWayPointIndex];
-                directionX = (transform.position.x < targetWaypoint.x) ? 1 : -1;
-                yield return new WaitForSeconds(waitTime);
-            }
-            yield return null;
-
+            anim.SetBool("Shoot", false);
         }
+
     }
 
-    void Aggro()
+    public void CoinSpawner()
     {
-        directionX = playerX;
-        directionY = playerY;
-    }
-
-    bool CanSeePlayer()
-    {
-        RaycastHit2D hit = Physics2D.Linecast(transform.position, playerTransfrom.position, viewMask);
-        if (distance < lookRadius && !hit)
+        for (int i = 0; i < coinDrop; i++)
         {
-            return true;
+            Instantiate(coinPrefab, transform.position, Quaternion.identity);
         }
-        return false;
     }
 
-    void CalculateVelocity()
+    public void InAttackRange()
     {
-        float targetVelocityX = moveSpeed * directionX;
-        velocity.x = Mathf.SmoothDamp(velocity.x, targetVelocityX, ref velocityXSmoothing, accelerationTime);
-        float targetVelocityY = moveSpeed * directionY;
-        velocity.y = Mathf.SmoothDamp(velocity.y, targetVelocityY, ref velocityYSmoothing, accelerationTime);
+        Collider2D playerCollider = Physics2D.OverlapCircle(new Vector2(transform.position.x + (attackPos.x * transform.localScale.x), transform.position.y + (attackPos.y * transform.localScale.y)), attackRange, playerMask);
+        inRange = (playerCollider != null);
     }
 
-
-    Renderer sprite;
-    Color colorStart = Color.red;
-    Color colorEnd = Color.white;
-    float duration = .05F;
-    public float damageDealt;
-
-    void Damage(int dmg)
+    public void TakeDamage(int dmg)
     {
+        canvas.enabled = true;
+        isAggro = true;
+        velocity += 20 * Vector3.Normalize(transform.position - player.transform.position);
+        Health -= dmg;
+        healthSlider.value = CalculateHealthPercent();
+        //StartCoroutine(Flash());
+        //sprite.material.color = Color.Lerp(colorStart, colorEnd, Mathf.PingPong(.5f, 1));
+        anim.SetTrigger("Hit");
         if (Health <= 0)
         {
-            Destroy(gameObject);
+            StartCoroutine(Die());
         }
-        else
-        {
-            Aggro();
-            velocity += 20 * Vector3.Normalize(transform.position - player.transform.position);
-            Health -= dmg;
-        }
-
-        float lerp = Mathf.PingPong(Time.time, duration) / duration;
-        sprite.material.color = Color.Lerp(colorStart, colorEnd, lerp);
-
+    }
+    private IEnumerator Die()
+    {
+        isDead = true;
+        anim.SetBool("isDead", true);
+        CoinSpawner();
+        gameObject.GetComponent<Collider2D>().enabled = false;
+        yield return new WaitForSeconds(anim.GetCurrentAnimatorStateInfo(0).length);
+        Destroy(gameObject);
+    }
+    /*
+    public IEnumerator Flash()
+    {
+        sprite.material.color = colorEnd;
+        yield return new WaitForSeconds(flashTime);
+        sprite.material.color = colorStart;
+    }
+    */
+    private float CalculateHealthPercent()
+    {
+        return Health / maxHealth;
     }
 
     private void OnDrawGizmos()
     {
-        Vector3 startPosition = pathHolder.GetChild(0).position;
-        Vector3 previousPosition = startPosition;
-        float size = .3f;
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(new Vector2(transform.position.x + (attackPos.x * transform.localScale.x), transform.position.y + (attackPos.y * transform.localScale.y)), attackRange);
 
-        Gizmos.color = new Color(255, 0, 0);
-        foreach (Transform waypoint in pathHolder)
-        {
-            Gizmos.DrawLine(waypoint.position - Vector3.up * size, waypoint.position + Vector3.up * size);
-            Gizmos.DrawLine(waypoint.position - Vector3.left * size, waypoint.position + Vector3.left * size);
-            previousPosition = waypoint.position;
-        }
         Gizmos.color = Color.green;
-        Gizmos.DrawWireSphere(transform.position, lookRadius);
-
+        Gizmos.DrawWireSphere(flyPos, flyRange);
     }
 
     private void OnTriggerStay2D(Collider2D collision)

@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -96,7 +97,7 @@ public class Player : MonoBehaviour {
     {
         if (Input.GetKeyDown(KeyCode.C))
         {
-            SceneManager.LoadScene(2);
+            DealDamage(20,Vector3.zero);
         }
         airborne = (!controller.collitions.below && !wallSliding);
         OnDamage();
@@ -126,7 +127,8 @@ public class Player : MonoBehaviour {
         Collider2D[] enemiesToAggro = Physics2D.OverlapCircleAll(transform.position, aggroRange, enemyMask);
         for (int i = 0; i < enemiesToAggro.Length; i++)
         {
-            enemiesToAggro[i].GetComponent<BaseEnemy>().isAggro = true;
+            bool hit = Physics2D.Linecast(transform.position, enemiesToAggro[i].transform.position, controller.collitionMask);
+            enemiesToAggro[i].GetComponent<BaseEnemy>().isAggro = !hit;
         }
 
     }
@@ -350,12 +352,19 @@ public class Player : MonoBehaviour {
         if (gm.health <= 0)
         {
             gm.health = gm.maxHealth;
-            //play death animation
-            //load screen
-            SceneManager.UnloadSceneAsync(SceneManager.GetActiveScene());
-            SceneManager.LoadScene(gm.lastCheckpointLevelIndex, LoadSceneMode.Additive);
-            transform.position = gm.lastCheckpointPos;
+            StartCoroutine(PlayerDeath());
         }
+    }
+
+    private IEnumerator PlayerDeath()
+    {
+        GetComponent<Player_Input>().enabled = false;
+        anim.SetBool("isDead", true);
+        yield return new WaitForSeconds(2f);
+        GameManager.instance.LoadScene(SceneManager.GetActiveScene().buildIndex, gm.lastCheckpointLevelIndex);
+        transform.position = gm.lastCheckpointPos;
+        anim.SetBool("isDead", false);
+        GetComponent<Player_Input>().enabled = true;
     }
 
     private void OnDrawGizmos()

@@ -67,6 +67,7 @@ public class PauseMenu : MonoBehaviour
         videoOptions.SetActive(false);
         audioOptions.SetActive(false);
         optionMenu.SetActive(false);
+        GameManager.instance.player.GetComponent<Player_Input>().enabled = true;
         Time.timeScale = 1f;
         gameIsPaused = false;
     }
@@ -108,6 +109,7 @@ public class PauseMenu : MonoBehaviour
 
     void Pause()
     {
+        GameManager.instance.player.GetComponent<Player_Input>().enabled = false;
         pauseMenu.SetActive(true);
         Time.timeScale = 0f;
         gameIsPaused = true;

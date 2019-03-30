@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -24,8 +25,11 @@ public class GameManager : MonoBehaviour
     public int currency;
     public Vector2 lastCheckpointPos;
     public int lastCheckpointLevelIndex;
-    public ParallaxCamera camera;
+    public Camera camera;
     public CameraController cameraController;
+    public Animator anim;
+    private int levelToUnload;
+    private int levelToLoad;
 
     private void OnDrawGizmos()
     {
@@ -34,22 +38,36 @@ public class GameManager : MonoBehaviour
             Gizmos.color = Color.green;
             Gizmos.DrawWireSphere(lastCheckpointPos, 2);
         }
-        
     }
-
-
+    
     public void LoadScene(int levelToUnload, int levelToLoad)
     {
-        SceneManager.LoadScene(levelToLoad, LoadSceneMode.Additive);
-        StartCoroutine(UnloadScene(levelToUnload, levelToLoad));
+        player.GetComponent<Player>().enabled = false;
+        anim.SetTrigger("FadeOut");
+        this.levelToLoad = levelToLoad;
+        this.levelToUnload = levelToUnload;
     }
 
-    private IEnumerator UnloadScene(int levelToUnload, int levelToLoad)
+    public void OnFadeComplete()
     {
-        yield return new WaitForSeconds(1f);
-        SceneManager.UnloadSceneAsync(levelToUnload);
-        SceneManager.SetActiveScene(SceneManager.GetSceneByBuildIndex(levelToLoad));
+        SceneManager.LoadSceneAsync(levelToLoad, LoadSceneMode.Additive).completed += LoadScene_completed;
     }
 
+    private void LoadScene_completed(AsyncOperation obj)
+    {
+        if (obj.isDone)
+        {
+            player.GetComponent<Player>().enabled = true;
+            SceneManager.UnloadSceneAsync(levelToUnload).completed += UnloadScene_completed;
+        }
+    }
 
+    private void UnloadScene_completed(AsyncOperation obj)
+    {
+        if (obj.isDone)
+        {
+            anim.SetTrigger("FadeIn");
+            SceneManager.SetActiveScene(SceneManager.GetSceneByBuildIndex(levelToLoad));
+        }
+    }
 }

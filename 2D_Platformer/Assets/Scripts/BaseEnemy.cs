@@ -124,6 +124,7 @@ public class BaseEnemy : MonoBehaviour
         isDead = true;
         anim.SetBool("isDead", true);
         CoinSpawner();
+        gameObject.GetComponent<Collider2D>().enabled = false;
         yield return new WaitForSeconds(anim.GetCurrentAnimatorStateInfo(0).length);
         Destroy(gameObject);
     }

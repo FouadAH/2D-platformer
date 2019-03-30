@@ -19,8 +19,17 @@ public class MainMenu : MonoBehaviour
     private IEnumerator Loading()
     {
         SceneManager.LoadSceneAsync("Base", LoadSceneMode.Additive);
-        SceneManager.LoadSceneAsync("Level_1", LoadSceneMode.Additive);
-        SceneManager.UnloadSceneAsync("MainMenu");
+        SceneManager.LoadSceneAsync("Level_1", LoadSceneMode.Additive).completed += MainMenu_completed;
         yield return null;
     }
+
+    private void MainMenu_completed(AsyncOperation obj)
+    {
+        if(obj.isDone)
+        {
+            SceneManager.SetActiveScene(SceneManager.GetSceneByBuildIndex(3));
+            SceneManager.UnloadSceneAsync("MainMenu");
+        }
+    }
+    
 }
