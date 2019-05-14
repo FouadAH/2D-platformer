@@ -20,10 +20,11 @@ public class Checkpoint: MonoBehaviour {
 
     private void OnTriggerStay2D(Collider2D collision)
     {
-        if (Input.GetKeyDown(KeyCode.E))
+        if (Input.GetButtonDown("Interact"))
         {
             GameManager.instance.lastCheckpointLevelIndex = levelIndex;
             GameManager.instance.lastCheckpointPos = transform.position;
+            GameManager.instance.SaveGame();
         }
     }
 

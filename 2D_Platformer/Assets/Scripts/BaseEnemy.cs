@@ -1,75 +1,93 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System;
+using System.Collections;
 using UnityEngine;
-using UnityEngine.AI;
 using UnityEngine.UI;
-
 [RequireComponent(typeof(Controller_2D))]
-public class BaseEnemy : MonoBehaviour
+public class BaseEnemy : IEnemy, IBaseStats
 {
-    Controller_2D controller;
-
-    Player player;
-    Transform playerTransfrom;
-    public LayerMask viewMask;
+    private Controller_2D controller;
 
     [SerializeField] private Vector2 attackPos;
-    [SerializeField] private LayerMask playerMask;
-
-    [SerializeField] private float lookRadius;
+    
     [SerializeField] private float attackRange;
 
-    [SerializeField] private float waitTime;
+    public Vector3 velocity;
+    private AttackProcessor attackProcessor;
+    public Animator anim;
+    
+    private bool isDead = false;
 
-    float Health;
-    [SerializeField] private float maxHealth;
+    public int coinDrop = 5;
+    [SerializeField] private GameObject coinPrefab;
 
-    [SerializeField] private Vector2 knockback;
+    [SerializeField] private int minMeleeDamage;
+    [SerializeField] private int maxMeleeDamage;
+    [SerializeField] private float meleeAttackMod;
 
-    [HideInInspector]
-    [SerializeField] private Vector3 velocity;
-   
-    RaycastHit2D hit;
+    [SerializeField] private float rangedAttackMod;
+    [SerializeField] private int baseRangeDamage;
 
-    SpriteRenderer sprite;
-    public float damageDealt;
+    [SerializeField] private int hitKnockbackAmount;
+    [SerializeField] private int damageKnockbackAmount;
 
-    Animator anim;
+    [SerializeField] private int maxHealth;
 
-    [SerializeField] private Canvas canvas;
-    [SerializeField] private Slider healthSlider;
+    private float velocityXSmoothing;
+    private float velocityYSmoothing;
 
-    public bool isAggro = false;
-    public bool inRange = false;
-    public bool isDead = false;
-    private readonly float flashTime = 0.3f;
+    public int MinMeleeDamage { get => minMeleeDamage; set => minMeleeDamage = value; }
+    public int MaxMeleeDamage { get => maxMeleeDamage; set => maxMeleeDamage = value; }
+    public float MeleeAttackMod { get => meleeAttackMod; set => meleeAttackMod = value; }
 
-    public int coinDrop;
-    public GameObject coinPrefab;
+    public float RangedAttackMod { get => rangedAttackMod; set => rangedAttackMod = value; }
+    public int BaseRangeDamage { get => baseRangeDamage; set => baseRangeDamage = value; }
 
-    public GameManager gm;
+    public int HitKnockbackAmount { get => hitKnockbackAmount; set => hitKnockbackAmount = value; }
+    public int knockbackGiven { get => damageKnockbackAmount; set => damageKnockbackAmount = value; }
 
-    private void Awake()
-    {
-        gm = FindObjectOfType<GameManager>();
-    }
+    public int MaxHealth { get => maxHealth; set => maxHealth = value; }
+    public float Health { get; set; }
+
+    
+    public float gravity = -3;
+    public float accelerationTimeGrounded = 0f;
+    public float moveSpeed = 5;
+    public bool attaking;
+
 
     void Start()
     {
+        attackProcessor = new AttackProcessor();
         anim = GetComponent<Animator>();
-        sprite = GetComponent<SpriteRenderer>();
-        player = gm.player.GetComponent<Player>();
-        playerTransfrom = player.transform;
-        Health = maxHealth;
+        Health = MaxHealth;
         controller = GetComponent<Controller_2D>();
-        healthSlider.value = CalculateHealthPercent();
-        canvas.enabled = false;
     }
 
     private void Update()
     {
-        InAttackRange();
-        if (isAggro && !isDead)
+        if (isDead)
+            return;
+        
+        AiStates();
+    }
+
+    private void LateUpdate()
+    {
+        if (isDead)
+            return;
+
+        if (attaking)
+        {
+            velocity.x = 0;
+        }
+        CalculateVelocity();
+        controller.Move(velocity * Time.deltaTime);
+        //Debug.DrawRay(transform.position, 10f * Vector2.right * transform.localScale, Color.blue);
+    }
+
+    void AiStates()
+    {
+        if (IsAggro)
         {
             anim.SetBool("isChasing", true);
             anim.SetBool("isPatroling", false);
@@ -79,15 +97,14 @@ public class BaseEnemy : MonoBehaviour
             anim.SetBool("isChasing", false);
             anim.SetBool("isPatroling", true);
         }
-        if (inRange && !isDead)
+        if (InAttackRange() && controller.collitions.below)
         {
-            anim.SetBool("Attack",true);
+            anim.SetBool("Attack", true);
         }
         else
         {
             anim.SetBool("Attack", false);
         }
-
     }
 
     public void CoinSpawner()
@@ -98,60 +115,74 @@ public class BaseEnemy : MonoBehaviour
         }
     }
 
-    public void InAttackRange()
+    public bool InAttackRange()
     {
-        Collider2D playerCollider = Physics2D.OverlapCircle(new Vector2(transform.position.x + (attackPos.x*transform.localScale.x), transform.position.y + (attackPos.y * transform.localScale.y)), attackRange, playerMask);
-        inRange = (playerCollider != null);
+        Collider2D playerCollider = Physics2D.OverlapCircle(new Vector2(transform.position.x + (attackPos.x*transform.localScale.x), transform.position.y + (attackPos.y * transform.localScale.y)), attackRange, PlayerMask);
+        return (playerCollider != null);
     }
-
-    public void TakeDamage(int dmg)
-    {
-        canvas.enabled = true;
-        isAggro = true; 
-        velocity += 20 * Vector3.Normalize(transform.position - player.transform.position);
-        Health -= dmg;
-        healthSlider.value = CalculateHealthPercent();
-        //StartCoroutine(Flash());
-        //sprite.material.color = Color.Lerp(colorStart, colorEnd, Mathf.PingPong(.5f, 1));
-        anim.SetTrigger("Hit");
-        if (Health <= 0)
-        {
-            StartCoroutine(Die());
-        }
-    }
+    
     private IEnumerator Die()
     {
         isDead = true;
+        anim.SetLayerWeight(0, 0f);
+        anim.SetLayerWeight(1, 0f);
+        anim.SetLayerWeight(2, 1f);
         anim.SetBool("isDead", true);
         CoinSpawner();
         gameObject.GetComponent<Collider2D>().enabled = false;
         yield return new WaitForSeconds(anim.GetCurrentAnimatorStateInfo(0).length);
         Destroy(gameObject);
     }
-    /*
-    public IEnumerator Flash()
+    
+    public void ModifyHealth(int amount)
     {
-        sprite.material.color = colorEnd;
-        yield return new WaitForSeconds(flashTime);
-        sprite.material.color = colorStart;
+        Health -= amount;
+        RaiseOnHitEnemyEvent(Health, maxHealth);
+        if (Health <= 0)
+        {
+            StartCoroutine(Die());
+        }
+        else
+        {
+            Aggro();
+            SpawnDamagePoints(amount);
+            anim.SetTrigger("Hit");
+        }
     }
-    */
-    private float CalculateHealthPercent()
+
+    public override bool CanSeePlayer()
     {
-        return Health / maxHealth;
+        return Physics2D.Raycast(transform.position, Vector2.right * transform.localScale, 10f, PlayerMask);
+    }
+    
+    public void AddForce(Vector2 force)
+    {
+        velocity.x = Mathf.SmoothDamp(velocity.x, force.x, ref velocityXSmoothing, 0);
+        velocity.y = Mathf.SmoothDamp(velocity.y, force.y, ref velocityYSmoothing, 0);
+    }
+
+    public void KnockbackOnHit(int amount, int dirX, int dirY)
+    {
+        AddForce(new Vector2(dirX * amount, 0));
+    }
+
+    public void KnockbackOnDamage(int amount, int dirX, int dirY)
+    {
+        AddForce(new Vector2(dirX * amount, 0));
+    }
+
+    public void CalculateVelocity()
+    {
+        float targetVelocity = moveSpeed * transform.localScale.x;
+        velocity.x = Mathf.SmoothDamp(velocity.x, targetVelocity, ref velocityXSmoothing, accelerationTimeGrounded);
+        velocity.y += gravity * Time.deltaTime;
     }
 
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(new Vector2(transform.position.x + (attackPos.x * transform.localScale.x), transform.position.y + (attackPos.y * transform.localScale.y)), attackRange);
-    }
-
-    private void OnTriggerStay2D(Collider2D collision)
-    {
-        if (collision.isTrigger != true && collision.tag == "Player")
-        {
-            player.DealDamage(damageDealt, Vector3.Normalize(player.transform.position - transform.position));
-        }
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, aggroRange);
     }
 }

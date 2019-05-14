@@ -158,7 +158,7 @@ public class Flying_Enemy : MonoBehaviour
     {
         if (collision.isTrigger != true && collision.tag == "Player")
         {
-            player.DealDamage(damageDealt, Vector3.Normalize(player.transform.position - transform.position));
+            //player.DealDamage(damageDealt, Vector3.Normalize(player.transform.position - transform.position));
         }
     }
 }

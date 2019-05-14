@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Audio;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 public class PauseMenu : MonoBehaviour
 {
@@ -13,8 +14,9 @@ public class PauseMenu : MonoBehaviour
     public GameObject optionMenu;
     public GameObject videoOptions;
     public GameObject audioOptions;
-
+    public EventSystem eventSystem;
     public AudioMixer audioMixer;
+    
     public TMPro.TMP_Dropdown resolutionDropdown;
 
     Resolution[] resolutions;
@@ -47,7 +49,7 @@ public class PauseMenu : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
+        if (Input.GetKeyDown(KeyCode.Escape) || Input.GetButtonDown("Pause"))
         {
             if (gameIsPaused)
             {
@@ -67,6 +69,7 @@ public class PauseMenu : MonoBehaviour
         videoOptions.SetActive(false);
         audioOptions.SetActive(false);
         optionMenu.SetActive(false);
+        eventSystem.SetSelectedGameObject(pauseMenu.GetComponentInChildren<Button>().gameObject);
         GameManager.instance.player.GetComponent<Player_Input>().enabled = true;
         Time.timeScale = 1f;
         gameIsPaused = false;
@@ -75,42 +78,79 @@ public class PauseMenu : MonoBehaviour
     {
         pauseMenu.SetActive(false);
         optionMenu.SetActive(true);
+        eventSystem.SetSelectedGameObject(optionMenu.GetComponentInChildren<Button>().gameObject);
     }
     public void OptionsBack()
     {
         pauseMenu.SetActive(true);
         optionMenu.SetActive(false);
+        eventSystem.SetSelectedGameObject(pauseMenu.GetComponentInChildren<Button>().gameObject);
     }
     public void VideoMenu()
     {
         videoOptions.SetActive(true);
         optionMenu.SetActive(false);
+        eventSystem.SetSelectedGameObject(videoOptions.GetComponentInChildren<Button>().gameObject);
     }
     public void VideoMenuBack()
     {
         videoOptions.SetActive(false);
         optionMenu.SetActive(true);
+        eventSystem.SetSelectedGameObject(optionMenu.GetComponentInChildren<Button>().gameObject);
     }
     public void AudioMenu()
     {
         audioOptions.SetActive(true);
         optionMenu.SetActive(false);
+        eventSystem.SetSelectedGameObject(audioOptions.GetComponentInChildren<Button>().gameObject);
     }
     public void AudioMenuBack()
     {
         audioOptions.SetActive(false);
         optionMenu.SetActive(true);
+        eventSystem.SetSelectedGameObject(optionMenu.GetComponentInChildren<Button>().gameObject);
     }
     public void QuitGame()
     {
         Time.timeScale = 1f;
-        SceneManager.LoadScene(0);
+        LoadMainMenu();
+    }
+
+    public void SaveGame()
+    {
+        GameManager.instance.SaveGame();
+    }
+    
+    public void LoadMainMenu()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadSceneAsync(2, LoadSceneMode.Additive).completed += LoadScene_completed;
+    }
+
+    private void LoadScene_completed(AsyncOperation obj)
+    {
+        if (obj.isDone)
+        {
+            
+            SceneManager.UnloadSceneAsync(GameManager.instance.currentScene).completed += UnloadScene_completed;
+            SceneManager.UnloadSceneAsync(1);
+            SceneManager.UnloadSceneAsync("AStar");
+        }
+    }
+
+    private void UnloadScene_completed(AsyncOperation obj)
+    {
+        if (obj.isDone)
+        {
+            SceneManager.SetActiveScene(SceneManager.GetSceneByBuildIndex(2));
+        }
     }
 
     void Pause()
     {
         GameManager.instance.player.GetComponent<Player_Input>().enabled = false;
         pauseMenu.SetActive(true);
+        eventSystem.SetSelectedGameObject(pauseMenu.GetComponentInChildren<Button>().gameObject);
         Time.timeScale = 0f;
         gameIsPaused = true;
     }
