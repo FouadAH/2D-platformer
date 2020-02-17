@@ -81,7 +81,7 @@ public class GameManager : MonoBehaviour
         {
             anim.SetTrigger("FadeIn");
             SceneManager.SetActiveScene(SceneManager.GetSceneByBuildIndex(levelToLoad));
-            AstarPath.active.Scan();
+            //AstarPath.active.Scan();
         }
     }
 

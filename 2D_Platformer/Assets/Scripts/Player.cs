@@ -88,13 +88,18 @@ public class Player : MonoBehaviour, IBaseStats{
         PlayerMovement = new PlayerMovement(transform, playerSettings);
     }
 
+    private void FixedUpdate()
+    {
+        if (GameManager.instance.loading)
+            return;
+        PlayerMovement.Movement();
+    }
     private void Update()
     {
         if (GameManager.instance.loading)
             return;
         OnDamage();
         Aggro();
-        PlayerMovement.Movement();
         playerAnimations.Animate(PlayerMovement);
     }
     
