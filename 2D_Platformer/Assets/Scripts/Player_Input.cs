@@ -1,102 +1,69 @@
-﻿using UnityEngine;
-using UnityEngine.Experimental.Input;
+﻿using System;
+using UnityEngine;
 
-[RequireComponent (typeof (Player))]
 public class Player_Input : MonoBehaviour
 {
-    Player player;
-    Animator animator;
-    public InputMaster controls;
+    public Vector2 directionalInput;
+    public bool jumping { get; set; }
+    public bool attacking { get; set; }
+    public bool dashing { get; set; }
+    public bool firing { get; set; }
+    [SerializeField] private float fireRate = 0.1f;
+    private float nextFireTime;
 
-    private Vector2 directionalInput;
+    public event Action OnFire = delegate{};
+    public event Action OnAttack = delegate { };
+    public event Action OnJumpUp = delegate { };
+    public event Action OnJumpDown = delegate { };
 
-    private bool attackDown;
-    private bool jumpDown;
-    private bool dashDown;
+    public int Xbox_One_Controller = 0;
+    public int PS4_Controller = 0;
 
-    public void OnEnable()
+    private void Update()
     {
-        controls.Player.Attack.performed += OnAttack;
-        controls.Player.Attack.Enable();
-
-        controls.Player.Movement.performed += OnMovement;
-        controls.Player.Movement.cancelled += OnMovement;
-        controls.Player.Movement.Enable();
-
-        controls.Player.Jump.started += OnJumpStarted;
-        controls.Player.Jump.cancelled += OnJumpCancelled;
-        controls.Player.Jump.Enable();
-
-        controls.Player.Dash.performed += OnDash;
-        controls.Player.Dash.Enable();
-
-    }
-    
-    public void OnDisable()
-    {
-        controls.Player.Attack.performed -= OnAttack;
-        controls.Player.Attack.Disable();
-
-        controls.Player.Movement.performed -= OnMovement;
-        controls.Player.Movement.cancelled -= OnMovement;
-        controls.Player.Movement.Disable();
-
-        controls.Player.Jump.started -= OnJumpStarted;
-        controls.Player.Jump.cancelled -= OnJumpCancelled;
-        controls.Player.Jump.Disable();
-
-        controls.Player.Dash.performed -= OnDash;
-        controls.Player.Dash.Disable();
-    }
-
-    public void OnJumpStarted(InputAction.CallbackContext context)
-    {
-        player.OnJumpInputDown();
-        animator.SetBool("isJumping", true);
-    }
-
-    public void OnJumpCancelled(InputAction.CallbackContext obj)
-    {
-        player.OnJumpInputUp();
-        animator.SetBool("isJumping", false);
-    }
-
-    public void OnMovement(InputAction.CallbackContext context)
-    {
-        directionalInput = context.ReadValue<Vector2>();
-    }
-
-    public void OnAttack(InputAction.CallbackContext context)
-    {
-        StartCoroutine(player.SwordAttack());
-        player.CanMove = false;
-    }
-    
-    public void OnDash(InputAction.CallbackContext context)
-    {
-        player.OnDashInput();
-    }
-
-    void Start()
-    {
-        player = GetComponent<Player>();
-        animator = GetComponent<Animator>();
-	}
-	
-	void Update()
-    {
-        player.SetDirectionalnput(directionalInput);
-        animator.SetFloat("Speed", Mathf.Abs(directionalInput.x));
-        
-        if (player.velocity.y < 0)
+        string[] names = Input.GetJoystickNames();
+        for (int x = 0; x < names.Length; x++)
         {
-            animator.SetBool("isFalling", true);
-            animator.SetBool("isJumping", false);
+            if (names[x].Length == 19)
+            {
+                print("PS4 CONTROLLER IS CONNECTED");
+                PS4_Controller = 1;
+                Xbox_One_Controller = 0;
+            }
+            if (names[x].Length == 33)
+            {
+                print("XBOX ONE CONTROLLER IS CONNECTED");
+                PS4_Controller = 0;
+                Xbox_One_Controller = 1;
+
+            }
         }
-        if (player.velocity.y == 0)
+
+        directionalInput = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+        if (Input.GetButtonDown("Jump"))
         {
-            animator.SetBool("isFalling", false);
+            OnJumpDown();
         }
+        if(Input.GetButtonUp("Jump"))
+        {
+            OnJumpUp();
+        }
+        if (Input.GetButtonDown("Attack"))
+        {
+            OnAttack();
+        }
+        firing = Input.GetButton("Fire");
+        dashing = Input.GetButtonDown("Dash");
+        if (firing && CanFire())
+        {
+            nextFireTime = Time.time + fireRate;
+            OnFire();
+        }
+    }
+
+    private bool CanFire()
+    {
+        return Time.time >= nextFireTime;
     }
     
 }

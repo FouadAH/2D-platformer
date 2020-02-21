@@ -6,312 +6,122 @@ using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(Controller_2D))]
 
-public class Player : MonoBehaviour {
+public class Player : MonoBehaviour, IBaseStats{
 
     Controller_2D controller;
 
     [HideInInspector]
     public Vector3 velocity;
-    private float velocityXSmoothing;
-
-    public Vector2 wallJumpclimb;
-    public Vector2 wallJumpOff;
-    public Vector2 wallLeap;
-
-    public Vector2 playerPosition;
-
-    bool wallSliding;
-    int wallDirX;
-    public float wallSlideSpeedMax = 3;
-    public float wallStickTime = 1f;
-    float timeToWallUnstick;
-
-    float accelerationTimeAirborne = .2f;
-    float accelerationTimeGrounded = .1f;
-
-    public float maxJumpHeight = 4f;
-    public float minJumpHeight = .5f;
-    public float timeToJumpApex = .4f;
-
-    public float moveSpeed = 6;
-
-    float gravity;
-
-    float maxJumpVelocity;
-    float minJumpVelocity;
-    private bool dashLock = false;
-    bool dashHover = false;
-    public float dashFactor = 10;
-
-    public int damage;
-    public float attackCooldown;
+   
     public LayerMask enemyMask;
     public Vector2 swordKnockback;
-    public Vector2 facingDir;
+    public Vector2 damageKnockback;
 
     float iFrames = 0f;
-    float iFrameTime = 1f;
+    float iFrameTime = 0.5f;
     bool invinsible = false;
-
-    Vector2 directionalInput;
-
-    SpriteRenderer sprite;
-    Color colorStart = Color.white;
-    Color colorEnd = Color.red;
-
+    
     Animator anim;
 
-    public bool CanAttack;
-    public bool CanMove;
-
-    public float health;
-    public float maxHealth;
-
-    public float aggroRange;
-    public int currency;
+    [SerializeField] private float aggroRange;
 
     [SerializeField] private GameManager gm;
-    public float dashCooldown = .3f;
-    private bool canDash = false;
-    private float targetVelocityX;
-    private bool airborne = false;
-    private bool dashedInAir;
-    private bool hasLanded = false;
-    private bool takingInput;
-
-    [SerializeField] private ParticleSystem afterImage;
     
-    void Start ()
+    public PlayerAnimations playerAnimations;
+    [SerializeField] private PlayerMovementSettings playerSettings;
+
+    public PlayerMovement PlayerMovement { get; private set; }
+
+    private bool staggered;
+
+    [SerializeField] private int minMeleeDamage;
+    [SerializeField] private int maxMeleeDamage;
+    [SerializeField] private float meleeAttackMod;
+
+    [SerializeField] private float rangedAttackMod;
+    [SerializeField] private int baseRangeDamage;
+
+    [SerializeField] private int maxHealth;
+
+    [SerializeField] private int hitKnockbackAmount;
+    [SerializeField] private int damageKnockbackAmount;
+
+    public int MinMeleeDamage { get => minMeleeDamage; set => minMeleeDamage = value; }
+    public int MaxMeleeDamage { get => maxMeleeDamage; set => maxMeleeDamage = value; }
+    public float MeleeAttackMod { get => meleeAttackMod; set => meleeAttackMod = value; }
+
+    public float RangedAttackMod { get => rangedAttackMod; set => rangedAttackMod = value; }
+    public int BaseRangeDamage { get => baseRangeDamage; set => baseRangeDamage = value; }
+
+    public int MaxHealth { get => maxHealth; set => maxHealth = value; }
+    public float Health { get; set; }
+
+    public int HitKnockbackAmount { get => hitKnockbackAmount; set => hitKnockbackAmount = value; }
+    public int knockbackGiven { get => damageKnockbackAmount; set => damageKnockbackAmount= value; }
+
+    public event Action OnHit = delegate { };
+
+    public CameraController cameraController;
+    public Camera camera;
+
+    Vector2 upperLeft;
+    Vector2 lowerRight;
+
+    private void Awake()
     {
-        afterImage.Pause();
+        GameManager.instance.player = gameObject;
+        camera = GameManager.instance.camera;
+        cameraController = GameManager.instance.cameraController;
+        GameManager.instance.cameraController.virtualCamera.Follow = transform;
+    }
+
+    void Start()
+    {
+        
+        transform.position = GameManager.instance.playerPosition;
+        controller = GetComponent<Controller_2D>();
         gm = FindObjectOfType<GameManager>();
         anim = GetComponent<Animator>();
-        sprite = GetComponent<SpriteRenderer>();
         controller = GetComponent<Controller_2D>();
-        gravity = -(2 * maxJumpHeight) / Mathf.Pow(timeToJumpApex, 2);
-        maxJumpVelocity = Mathf.Abs(gravity) * timeToJumpApex;
-        minJumpVelocity = Mathf.Sqrt(2 * Mathf.Abs(gravity) * minJumpHeight);
+
+        playerAnimations = new PlayerAnimations(GetComponent<Animator>(), transform);
+        PlayerMovement = new PlayerMovement(transform, playerSettings);
     }
 
+    private void FixedUpdate()
+    {
+        if (GameManager.instance.loading)
+            return;
+        PlayerMovement.Movement();
+    }
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.C))
-        {
-            DealDamage(20,Vector3.zero);
-        }
-        airborne = (!controller.collitions.below && !wallSliding);
+        if (GameManager.instance.loading)
+            return;
         OnDamage();
         Aggro();
-        DashController();
-        CalculateVelocity();
-        HandleWallSliding();
-        LerpColor();
-        
-        controller.Move(velocity * Time.deltaTime, new Vector2(-1, directionalInput.y));
-        
-        if (controller.collitions.above || controller.collitions.below)
-        {
-            if(controller.collitions.slidingDownMaxSlope)
-            {
-                velocity.y += controller.collitions.slopeNormal.y*gravity*-1*Time.deltaTime;
-            }
-            else
-            {
-                velocity.y = 0;
-            }
-        }
+        playerAnimations.Animate(PlayerMovement);
     }
-
+    
     public void Aggro()
     {
-        Collider2D[] enemiesToAggro = Physics2D.OverlapCircleAll(transform.position, aggroRange, enemyMask);
+        Vector2 upperLeftScreen = new Vector2(0, Screen.height);
+        Vector2 lowerRightScreen = new Vector2(Screen.width, 0);
+
+        upperLeft = camera.ScreenToWorldPoint(upperLeftScreen);
+        lowerRight = camera.ScreenToWorldPoint(lowerRightScreen);
+
+        Collider2D[] enemiesToAggro = Physics2D.OverlapAreaAll(upperLeft, lowerRight, enemyMask);
         for (int i = 0; i < enemiesToAggro.Length; i++)
         {
             bool hit = Physics2D.Linecast(transform.position, enemiesToAggro[i].transform.position, controller.collitionMask);
-            enemiesToAggro[i].GetComponent<BaseEnemy>().isAggro = !hit;
-        }
-
-    }
-
-    void LerpColor()
-    {
-        if (invinsible)
-        {
-            sprite.material.color = Color.Lerp(colorStart, colorEnd, Mathf.PingPong(.5f, 1));
-        }
-        else
-        {
-            sprite.material.color = Color.white;
-        }
-    }
-
-    public void SetDirectionalnput(Vector2 input)
-    {
-        if (!dashHover)
-        {
-            directionalInput = input;
-            if(directionalInput.x < 0)
+            if (enemiesToAggro[i].GetComponent<IEnemy>().CanSeePlayer() && !hit && !enemiesToAggro[i].GetComponent<IEnemy>().IsAggro)  
             {
-                transform.localScale = new Vector2(-1, 1);
-                afterImage.transform.localScale = new Vector2(-2, 2);
-            }
-            else if (directionalInput.x > 0)
-            {
-                transform.localScale = new Vector2(1, 1);
-                afterImage.transform.localScale = new Vector2(2, 2);
-            }
-        }
-
-    }
-
-    public void OnJumpInputUp()
-    {
-        if (velocity.y > minJumpVelocity)
-        {
-            velocity.y = minJumpVelocity;
-        }
-    }
-
-    public void OnJumpInputDown()
-    {
-        if (wallSliding)
-        {
-            if (wallDirX == directionalInput.x)
-            {
-                velocity.x = -wallDirX * wallJumpclimb.x;
-                velocity.y = wallJumpclimb.y;
-            }
-            else if (directionalInput.x == 0)
-            {
-                velocity.x = -wallDirX * wallJumpOff.x;
-                velocity.y = wallJumpOff.y;
-            }
-            else
-            {
-                velocity.x = -wallDirX * wallLeap.x;
-                velocity.y = wallLeap.y;
-            }
-        }
-
-        if (controller.collitions.below)
-        {
-            if (controller.collitions.slidingDownMaxSlope)
-            {
-                if (directionalInput.x != -Mathf.Sign(controller.collitions.slopeNormal.x))
-                {
-                    velocity.y = maxJumpVelocity * controller.collitions.slopeNormal.y;
-                    velocity.x = maxJumpVelocity * controller.collitions.slopeNormal.x;
-                }
-            }
-            else
-            {
-                velocity.y = maxJumpVelocity;
+                enemiesToAggro[i].GetComponent<IEnemy>().Aggro();
             }
         }
     }
-    
-    public void OnDashInput()
-    {
-        if (!dashLock)
-        {
-            canDash = true;
-        }
-    }
 
-    public bool DashController()
-    {
-        if (canDash)
-        {
-            if (velocity.y > 0)
-            {
-                velocity.y = 0;
-            }
-
-            StartCoroutine(DashLockout());
-
-            if (directionalInput.x == 0)
-            {
-                velocity.x = transform.localScale.x * moveSpeed * dashFactor;
-            }
-            else
-            {
-                velocity.x = ((Mathf.Sign(directionalInput.x) == -1) ? -1 : 1) * moveSpeed * dashFactor;
-            }
-        }
-        canDash = false;
-        
-        return dashHover;
-    }
-
-    public IEnumerator DashLockout()
-    {
-        dashLock = true;
-        dashHover = true;
-        afterImage.Play();
-        yield return new WaitForSeconds(dashCooldown);
-        afterImage.Stop();
-        dashHover = false;
-        yield return new WaitWhile(() => airborne);
-        dashLock = false;
-    }
-    
-    public IEnumerator SwordAttack()
-    {
-        anim.SetTrigger("isAttacking");
-        yield return new WaitForSeconds(attackCooldown);
-        CanAttack = true;
-    }
-    
-
-    void CalculateVelocity()
-    {
-        float targetVelocityX = moveSpeed * directionalInput.x;
-        velocity.x = Mathf.SmoothDamp(velocity.x, targetVelocityX, ref velocityXSmoothing, (controller.collitions.below ? accelerationTimeGrounded : accelerationTimeAirborne));
-        if (!dashHover)
-        {
-            velocity.y += gravity * Time.deltaTime;
-        }
-        else
-        {
-            velocity.y = 0;
-        }
-        
-    }
-
-    void HandleWallSliding()
-    {
-        wallDirX = (controller.collitions.left) ? -1 : 1;
-        wallSliding = false;
-        if ((controller.collitions.left || controller.collitions.right) && !controller.collitions.below && velocity.y < 0)
-        {
-            wallSliding = true;
-
-            if (velocity.y < wallSlideSpeedMax)
-            {
-                velocity.y = -wallSlideSpeedMax;
-            }
-            if (timeToWallUnstick > 0)
-            {
-                velocityXSmoothing = 0;
-                velocity.x = 0;
-
-                if (directionalInput.x != wallDirX && directionalInput.x != 0)
-                {
-                    timeToWallUnstick -= Time.deltaTime;
-                }
-                else
-                {
-                    timeToWallUnstick = wallStickTime;
-                }
-            }
-            else
-            {
-                timeToWallUnstick = wallStickTime;
-            }
-        }
-        anim.SetBool("isWallSliding", wallSliding);
-    }
-    
     public void OnDamage()
     {
         if (invinsible)
@@ -323,6 +133,7 @@ public class Player : MonoBehaviour {
             else
             {
                 invinsible = false;
+                anim.SetBool("invinsible", false);
             }
         }
     }
@@ -334,42 +145,67 @@ public class Player : MonoBehaviour {
         velocity.y += dir.y * kockbackDistance.y;
     }
 
-    public void DealDamage(float damage, Vector3 dir)
-    {
-        if (!invinsible)
-        {
-            iFrames = iFrameTime;
-            invinsible = true;
-            gm.health -= damage;
-            Knockback(dir, swordKnockback);
-            CheckDeath();
-        }
-        
-    }
-
     private void CheckDeath()
     {
         if (gm.health <= 0)
         {
-            gm.health = gm.maxHealth;
             StartCoroutine(PlayerDeath());
         }
     }
 
     private IEnumerator PlayerDeath()
     {
+        PlayerMovement.isDead = true;
         GetComponent<Player_Input>().enabled = false;
+
+        anim.SetLayerWeight(0, 0f);
+        anim.SetLayerWeight(1, 0f);
+        anim.SetLayerWeight(2, 0f);
+        anim.SetLayerWeight(3, 1f);
         anim.SetBool("isDead", true);
+
         yield return new WaitForSeconds(2f);
+        Respawn();
+
+        anim.SetBool("isDead", false);
+        anim.SetLayerWeight(0, 1f);
+        anim.SetLayerWeight(1, 1f);
+        anim.SetLayerWeight(2, 1f);
+        anim.SetLayerWeight(3, 0f);
+        gm.health = gm.maxHealth;
+        GetComponent<Player_Input>().enabled = true;
+        PlayerMovement.isDead = false;
+    }
+    
+
+    public void Respawn()
+    {
         GameManager.instance.LoadScene(SceneManager.GetActiveScene().buildIndex, gm.lastCheckpointLevelIndex);
         transform.position = gm.lastCheckpointPos;
-        anim.SetBool("isDead", false);
-        GetComponent<Player_Input>().enabled = true;
+        GameManager.instance.drone.transform.position = transform.position;
     }
 
-    private void OnDrawGizmos()
+    public void ModifyHealth(int amount)
     {
-        Gizmos.color = Color.green;
-        Gizmos.DrawWireSphere(transform.position, aggroRange);
+        if (!invinsible)
+        {
+            iFrames = iFrameTime;
+            anim.SetTrigger("Hit");
+            OnHit();
+            anim.SetBool("invinsible", true);
+            invinsible = true;
+            gm.health -= amount;
+            CheckDeath();
+        }
+    }
+
+    public void KnockbackOnHit(int amount, int dirX, int dirY)
+    {
+        PlayerMovement.Knockback( new Vector3(dirX, dirY), amount);
+    }
+
+    public void KnockbackOnDamage(int amount, int dirX, int dirY)
+    {
+        PlayerMovement.Knockback(new Vector3(dirX, dirY), amount);
     }
 }

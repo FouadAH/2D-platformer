@@ -7,6 +7,7 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager instance { get; private set; }
     public GameObject player;
+    public GameObject drone;
 
     void Awake()
     {
@@ -20,16 +21,22 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public float health = 100;
-    public float maxHealth = 100;
+    public float health = 10000;
+    public float maxHealth = 10000;
+    public float gunHeat = 0;
+    public float maxGunHeat = 100;
     public int currency;
+    public Camera camera;
     public Vector2 lastCheckpointPos;
     public int lastCheckpointLevelIndex;
-    public Camera camera;
     public CameraController cameraController;
     public Animator anim;
     private int levelToUnload;
     private int levelToLoad;
+    public int currentScene;
+    public bool loading = false;
+    public Vector3 playerPosition;
+    public Vector3 dronePosition;
 
     private void OnDrawGizmos()
     {
@@ -42,7 +49,10 @@ public class GameManager : MonoBehaviour
     
     public void LoadScene(int levelToUnload, int levelToLoad)
     {
+        loading = true;
+        currentScene = levelToLoad;
         player.GetComponent<Player>().enabled = false;
+        drone.GetComponent<DroneAI>().enabled = false;
         anim.SetTrigger("FadeOut");
         this.levelToLoad = levelToLoad;
         this.levelToUnload = levelToUnload;
@@ -57,7 +67,10 @@ public class GameManager : MonoBehaviour
     {
         if (obj.isDone)
         {
+            loading = false;
             player.GetComponent<Player>().enabled = true;
+            drone.GetComponent<DroneAI>().enabled = true;
+            AstarPath.active.Scan();
             SceneManager.UnloadSceneAsync(levelToUnload).completed += UnloadScene_completed;
         }
     }
@@ -68,6 +81,44 @@ public class GameManager : MonoBehaviour
         {
             anim.SetTrigger("FadeIn");
             SceneManager.SetActiveScene(SceneManager.GetSceneByBuildIndex(levelToLoad));
+            //AstarPath.active.Scan();
         }
+    }
+
+    /////////////////////////////////////////////////////////////////
+    ///                 SAVING AND LOADING                       ///
+    ///////////////////////////////////////////////////////////////                 
+
+    public void SaveGame()
+    {
+        GameDataController.SaveGame();
+    }
+
+    public void LoadGame()
+    {
+        PlayerData data = GameDataController.LoadData();
+
+        health = data.health;
+        maxHealth = data.maxHealth;
+        currency = data.currency;
+
+        Vector3 playerPosition;
+        playerPosition.x = data.playerPosition[0];
+        playerPosition.y = data.playerPosition[1];
+        playerPosition.z = data.playerPosition[2];
+
+        Vector3 dronePosition;
+        dronePosition.x = data.dronePosition[0];
+        dronePosition.y = data.dronePosition[1];
+        dronePosition.z = data.dronePosition[2];
+
+        Vector2 checkpointPosition;
+        checkpointPosition.x = data.lastCheckpointPos[0];
+        checkpointPosition.y = data.lastCheckpointPos[1];
+        lastCheckpointPos = checkpointPosition;
+        
+        lastCheckpointLevelIndex = data.lastCheckpointLevelIndex;
+
+        currentScene = data.currentScene;
     }
 }

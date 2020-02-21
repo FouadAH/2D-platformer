@@ -5,17 +5,21 @@ using UnityEngine;
 public class PlayerHitbox : MonoBehaviour
 {
     Player player;
+    private AttackProcessor attackProcessor;
+
     private void Start()
     {
+        attackProcessor = new AttackProcessor();
         player = GetComponentInParent<Player>();
     }
+
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (collision.tag == "Enemy")
+        if (collision.GetComponent<IDamagable>() != null)
         {
-            collision.GetComponent<BaseEnemy>().TakeDamage(player.damage);
-            player.Knockback(player.transform.localScale*-1, player.swordKnockback);
-
+            //attackProcessor.ProcessMelee(player, collision.GetComponent<IDamagable>());
+            //collision.GetComponent<BaseEnemy>().TakeDamage(Random.Range(player.minDamage, player.maxDamage + 1));
+            //player.Knockback(player.transform.localScale*-1, player.swordKnockback);
         }
     }
 }

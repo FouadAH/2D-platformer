@@ -5,23 +5,23 @@ using UnityEngine;
 public class Spikes : MonoBehaviour {
 
     private Player player;
-    public float damageDealt;
+    public int damageDealt;
     private GameManager gm;
+
     private void Awake()
     {
         gm = FindObjectOfType<GameManager>();
     }
-    private void Start()
+
+    private void OnTriggerStay2D(Collider2D collision)
     {
         player = gm.player.GetComponent<Player>();
-    }
 
-    private void OnTriggerEnter2D(Collider2D collision)
-    {
         if (collision.gameObject.tag.Equals("Player"))
         {
-            player.DealDamage(damageDealt, Vector3.Normalize(player.transform.position - transform.position));
-            player.transform.position = GameManager.instance.lastCheckpointPos;
+            player = gm.player.GetComponent<Player>();
+            player.ModifyHealth(damageDealt);
+            player.Respawn();
         }
     }
 }
