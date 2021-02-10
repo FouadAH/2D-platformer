@@ -1,5 +1,8 @@
 ﻿using UnityEngine;
 
+/// <summary>
+/// Interface for game objects that are damagable.
+/// </summary>
 public interface IDamagable
 {
     float Health { get; set; }

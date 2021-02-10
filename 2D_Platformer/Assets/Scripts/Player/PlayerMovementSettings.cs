@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Scriptable object that holds all the players' movement values (movement speed, jump height, dash settings, health ...) 
+/// </summary>
 [CreateAssetMenu(menuName = "Player/Stats", fileName ="PlayerStats")]
 public class PlayerMovementSettings : ScriptableObject
 {

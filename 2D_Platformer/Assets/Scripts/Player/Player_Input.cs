@@ -1,6 +1,9 @@
 ﻿using System;
 using UnityEngine;
 
+/// <summary>
+/// Class responsible for handling player input. 
+/// </summary>
 public class Player_Input : MonoBehaviour
 {
     public Vector2 directionalInput;

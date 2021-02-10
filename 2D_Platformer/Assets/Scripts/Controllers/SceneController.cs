@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Class responsible for setting the virtual cameras' bounds based on the current levels bounds
+/// </summary>
 public class SceneController : MonoBehaviour
 {
     public PolygonCollider2D colCameraBounds;

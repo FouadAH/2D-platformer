@@ -1,4 +1,7 @@
-﻿public interface IBaseStats : IDamagable
+﻿/// <summary>
+/// Interface for game objects that have stats (i.e the player, and npcs), extends the damagable interface
+/// </summary>
+public interface IBaseStats : IDamagable
 {
     int MinMeleeDamage { get; set; }
     int MaxMeleeDamage { get; set; }

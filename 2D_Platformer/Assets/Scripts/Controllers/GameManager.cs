@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+/// <summary>
+/// Class responsible for ascynchronis scene loading and unloading, as well as holding, saving and loading player data 
+/// </summary>
 public class GameManager : MonoBehaviour
 {
     public static GameManager instance { get; private set; }

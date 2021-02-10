@@ -1,5 +1,8 @@
 ﻿using UnityEngine;
 
+/// <summary>
+/// Controller class responsile for handling ray cast logic. Used to determine collitions. 
+/// </summary>
 [RequireComponent(typeof(Collider2D))]
 public class RayCast_Controller : MonoBehaviour {
 

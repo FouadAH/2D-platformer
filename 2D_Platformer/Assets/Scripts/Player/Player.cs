@@ -66,24 +66,19 @@ public class Player : MonoBehaviour, IBaseStats{
 
     Vector2 upperLeft;
     Vector2 lowerRight;
-
-    private void Awake()
+    
+    void Start()
     {
         GameManager.instance.player = gameObject;
         camera = GameManager.instance.camera;
         cameraController = GameManager.instance.cameraController;
         GameManager.instance.cameraController.virtualCamera.Follow = transform;
-    }
 
-    void Start()
-    {
-        
         transform.position = GameManager.instance.playerPosition;
         controller = GetComponent<Controller_2D>();
         gm = FindObjectOfType<GameManager>();
         anim = GetComponent<Animator>();
         controller = GetComponent<Controller_2D>();
-
         playerAnimations = new PlayerAnimations(GetComponent<Animator>(), transform);
         PlayerMovement = new PlayerMovement(transform, playerSettings);
     }
@@ -103,6 +98,9 @@ public class Player : MonoBehaviour, IBaseStats{
         playerAnimations.Animate(PlayerMovement);
     }
     
+    /// <summary>
+    /// Method for handling enemy aggro
+    /// </summary>
     public void Aggro()
     {
         Vector2 upperLeftScreen = new Vector2(0, Screen.height);
@@ -122,6 +120,9 @@ public class Player : MonoBehaviour, IBaseStats{
         }
     }
 
+    /// <summary>
+    /// Method that handles iframe logic when the player takes damage
+    /// </summary>
     public void OnDamage()
     {
         if (invinsible)
@@ -138,6 +139,7 @@ public class Player : MonoBehaviour, IBaseStats{
         }
     }
 
+    // not used 
     public void Knockback(Vector3 dir, Vector2 kockbackDistance)
     {
         velocity = Vector3.zero;
@@ -145,6 +147,9 @@ public class Player : MonoBehaviour, IBaseStats{
         velocity.y += dir.y * kockbackDistance.y;
     }
 
+    /// <summary>
+    /// Helper method that check if the player is dead or not 
+    /// </summary>
     private void CheckDeath()
     {
         if (gm.health <= 0)
@@ -153,6 +158,10 @@ public class Player : MonoBehaviour, IBaseStats{
         }
     }
 
+    /// <summary>
+    /// Coroutine that runs when the player dies, handles death animation and respawning
+    /// </summary>
+    /// <returns></returns>
     private IEnumerator PlayerDeath()
     {
         PlayerMovement.isDead = true;
@@ -177,7 +186,9 @@ public class Player : MonoBehaviour, IBaseStats{
         PlayerMovement.isDead = false;
     }
     
-
+    /// <summary>
+    /// Method that respawns the player at the last checkpoint
+    /// </summary>
     public void Respawn()
     {
         GameManager.instance.LoadScene(SceneManager.GetActiveScene().buildIndex, gm.lastCheckpointLevelIndex);
@@ -185,6 +196,10 @@ public class Player : MonoBehaviour, IBaseStats{
         GameManager.instance.drone.transform.position = transform.position;
     }
 
+    /// <summary>
+    /// Method reponsible for damaging the player
+    /// </summary>
+    /// <param name="amount"></param>
     public void ModifyHealth(int amount)
     {
         if (!invinsible)

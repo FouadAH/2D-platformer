@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>Class responsible for handling player movement calculations</summary>
+
 public class PlayerMovement
 {
     private readonly Player_Input playerInput;
@@ -29,6 +31,10 @@ public class PlayerMovement
     public bool IsSwinging { get; set; }
     public Vector2 RopeHook { get; set; }
 
+    /// <summary>
+    /// Constructor that takes a Transform object and a PlayerMovementSettings, 
+    /// initializes player settings and handles player input events
+    /// </summary>
     public PlayerMovement(Transform transformToMove, PlayerMovementSettings playerSettings)
     {
         this.playerInput = transformToMove.GetComponent<Player_Input>();
@@ -44,6 +50,12 @@ public class PlayerMovement
         minJumpVelocity = Mathf.Sqrt(2 * Mathf.Abs(gravity) * playerSettings.MinJumpHeight);
     }
 
+    /// <summary>
+    /// Main movement method, responsible for calculating 
+    /// and executing player movement as well as jumping, 
+    /// wall sliding, slope, orientation and dash logic
+    /// gets called on every frame (fixed update)
+    /// </summary>
     public void Movement()
     {
         if (isDead)
@@ -69,6 +81,11 @@ public class PlayerMovement
         HandleMaxSlope();
     }
 
+    /// <summary>
+    /// Method for calculating knockback 
+    /// </summary>
+    /// <param name="dir">Direction of knockback force</param>
+    /// <param name="kockbackDistance">Knockback force amount</param>
     public void Knockback(Vector3 dir, float kockbackDistance)
     {
         velocity = Vector3.zero;
@@ -77,6 +94,9 @@ public class PlayerMovement
         //controller.Move(velocity * Time.deltaTime, new Vector2(-1, playerInput.directionalInput.y));
     }
 
+    /// <summary>
+    /// Method for handling jump logic
+    /// </summary>
     void HandleJump()
     {
         if (playerInput.jumping)
@@ -89,6 +109,9 @@ public class PlayerMovement
         }
     }
 
+    /// <summary>
+    /// Method for handling dash logic
+    /// </summary>
     void HandleDash()
     {
         if (playerInput.dashing)
@@ -99,6 +122,10 @@ public class PlayerMovement
         playerDash.DashController(ref velocity, playerInput, playerSettings);
     }
 
+    /// <summary>
+    /// Method that calculates the players' velocity based on the players' speed and input 
+    /// </summary>
+    /// <param name="velocityXSmoothing"></param>
     public void CalculateVelocity(float velocityXSmoothing)
     {
         float targetVelocityX = playerSettings.MoveSpeed * playerInput.directionalInput.x;
@@ -115,6 +142,9 @@ public class PlayerMovement
 
     }
 
+    /// <summary>
+    /// Method for handling player movement on a slope, the player slides down if he is standing on a max slope  
+    /// </summary>
     void HandleMaxSlope()
     {
         if (controller.collitions.above || controller.collitions.below)
@@ -130,6 +160,10 @@ public class PlayerMovement
         }
     }
 
+    /// <summary>
+    /// Method that handles wall sliding logic
+    /// </summary>
+    /// <param name="velocityXSmoothing"></param>    
     void HandleWallSliding(float velocityXSmoothing)
     {
         wallDirX = (controller.collitions.left) ? -1 : 1;
@@ -163,6 +197,9 @@ public class PlayerMovement
         }
     }
 
+    /// <summary>
+    /// Method that handles jump logic and amount when the jump button is pressed down
+    /// </summary>
     public void OnJumpInputDown()
     {
         if (WallSliding)
@@ -201,6 +238,9 @@ public class PlayerMovement
         }
     }
 
+    /// <summary>
+    /// Method that handles jump logic when the player lets go of the jump button, allows the player to control the jump amount 
+    /// </summary>
     public void OnJumpInputUp()
     {
         if (velocity.y > minJumpVelocity)
@@ -209,6 +249,10 @@ public class PlayerMovement
         }
     }
 
+    /// <summary>
+    /// Method for setting the players' orientation based on input
+    /// </summary>
+    /// <param name="input">Player input</param>
     public void SetPlayerOrientation(Vector2 input)
     {
         if (!playerDash.dashHover)
@@ -217,16 +261,19 @@ public class PlayerMovement
             if (playerInput.directionalInput.x < 0)
             {
                 transformToMove.localScale = new Vector3(-1, 1, -1);
-                playerDash.AfterImage.transform.localScale = new Vector3(-2, 2, -1);
+                playerDash.AfterImage.transform.localScale = new Vector3(-4, 4, 0);
             }
             else if (playerInput.directionalInput.x > 0)
             {
                 transformToMove.localScale = new Vector3(1, 1, -1);
-                playerDash.AfterImage.transform.localScale = new Vector3(2, 2, -1);
+                playerDash.AfterImage.transform.localScale = new Vector3(4, 4, 0);
             }
         }
     }
 
+    /// <summary>
+    /// Method that pulls the player towards the hook point
+    /// </summary>
     public void Swing()
     {
         var playerToHookDirection = (RopeHook - (Vector2)transformToMove.position).normalized;
@@ -234,6 +281,10 @@ public class PlayerMovement
         AddForce(pullforce);
     }
 
+    /// <summary>
+    /// Helper method for changing the players'velocity based on a force
+    /// </summary>
+    /// <param name="force">Force acting opon player</param>
     public void AddForce(Vector2 force)
     {
         velocity.x = Mathf.SmoothDamp(velocity.x, force.x, ref velocityXSmoothing, playerSettings.AccelerationTimeSwing);

@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Player hitbox class, initializes an attack processor on start.  
+/// </summary>
 public class PlayerHitbox : MonoBehaviour
 {
     Player player;

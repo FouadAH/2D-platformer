@@ -1,8 +1,7 @@
 // GENERATED AUTOMATICALLY FROM 'Assets/Scripts/InputMaster.inputactions'
-
+/*
 using System;
 using UnityEngine;
-using UnityEngine.Experimental.Input;
 
 
 [Serializable]
@@ -99,3 +98,4 @@ public class InputMaster : InputActionAssetReference
         }
     }
 }
+*/

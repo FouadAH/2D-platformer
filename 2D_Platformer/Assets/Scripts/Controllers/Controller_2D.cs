@@ -2,9 +2,12 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+
+/// <summary>
+/// Controller class that handles collition logic, extends the raycast controller
+/// </summary>
 public class Controller_2D : RayCast_Controller
 {
-
     public Collitioninfo collitions;
 
     public float maxSlopeAngle = 50f;
@@ -18,17 +21,28 @@ public class Controller_2D : RayCast_Controller
         collitions.faceDirection = 1;
     }
 
+    /// <summary>
+    /// Method that moves the object by the given amount
+    /// </summary>
+    /// <param name="moveAmount">Amount to move</param>
+    /// <param name="standingOnPlatform">Is the object standing a moving platform</param>
     public void Move(Vector2 moveAmount, bool standingOnPlatform = false)
     {
         Move(moveAmount, Vector2.zero, standingOnPlatform);
     }
+
+    /// <summary>
+    ///  Method that moves the object by the given amount
+    /// </summary>
+    /// <param name="moveAmount"></param>
+    /// <param name="input"></param>
+    /// <param name="standingOnPlatform"></param>
     public void Move(Vector2 moveAmount, Vector2 input, bool standingOnPlatform = false)
     {
         playerInput = input;
         collitions.Reset();
         UpdateRaycastOrigins();
         collitions.moveAmountOld = moveAmount;
-
 
         if (moveAmount.y < 0)
         {
@@ -51,6 +65,10 @@ public class Controller_2D : RayCast_Controller
         transform.Translate(moveAmount);
     }
 
+    /// <summary>
+    /// Method that handles horizontal collition logic 
+    /// </summary>
+    /// <param name="moveAmount">Reference to the amount the object is moved</param>
     void HorizontalCollitions(ref Vector2 moveAmount)
     {
         float directionX = collitions.faceDirection;
@@ -116,6 +134,10 @@ public class Controller_2D : RayCast_Controller
         }
     }
 
+    /// <summary>
+    /// Method that handles vertical collition logic 
+    /// </summary>
+    /// <param name="moveAmount">Reference to the amount the object is moved</param>
     void VerticalCollitions(ref Vector2 moveAmount)
     {
         float directionY = Mathf.Sign(moveAmount.y);
