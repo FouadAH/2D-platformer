@@ -67,12 +67,15 @@ public class Player : MonoBehaviour, IBaseStats{
     Vector2 upperLeft;
     Vector2 lowerRight;
     
-    void Start()
+    void Awake()
     {
         GameManager.instance.player = gameObject;
         camera = GameManager.instance.camera;
         cameraController = GameManager.instance.cameraController;
         GameManager.instance.cameraController.virtualCamera.Follow = transform;
+    }
+    void Start()
+    {
 
         transform.position = GameManager.instance.playerPosition;
         controller = GetComponent<Controller_2D>();

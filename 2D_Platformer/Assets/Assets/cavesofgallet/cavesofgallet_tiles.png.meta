@@ -302,6 +302,8 @@ TextureImporter:
   isReadable: 0
   streamingMipmaps: 0
   streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMasterTextureLimit: 0
   grayScaleToAlpha: 0
   generateCubemap: 6
   cubemapConvolution: 0
@@ -311,8 +313,8 @@ TextureImporter:
   textureSettings:
     serializedVersion: 2
     filterMode: 0
-    aniso: -1
-    mipBias: -100
+    aniso: 1
+    mipBias: 0
     wrapU: 1
     wrapV: 1
     wrapW: 1
@@ -333,9 +335,12 @@ TextureImporter:
   textureType: 8
   textureShape: 1
   singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
   maxTextureSizeSet: 0
   compressionQualitySet: 0
   textureFormatSet: 0
+  ignorePngGamma: 0
   applyGammaDecoding: 1
   platformSettings:
   - serializedVersion: 3
@@ -2328,6 +2333,100 @@ TextureImporter:
     edges: []
     weights: []
     secondaryTextures: []
+    nameFileIdTable:
+      cavesofgallet_tiles_13: 21300026
+      cavesofgallet_tiles_85: 21300170
+      cavesofgallet_tiles_21: 21300042
+      cavesofgallet_tiles_10: 21300020
+      cavesofgallet_tiles_37: 21300074
+      cavesofgallet_tiles_78: 21300156
+      cavesofgallet_tiles_26: 21300052
+      cavesofgallet_tiles_1: 21300002
+      cavesofgallet_tiles_73: 21300146
+      cavesofgallet_tiles_45: 21300090
+      cavesofgallet_tiles_88: 21300176
+      cavesofgallet_tiles_62: 21300124
+      cavesofgallet_tiles_38: 21300076
+      cavesofgallet_tiles_18: 21300036
+      cavesofgallet_tiles_70: 21300140
+      cavesofgallet_tiles_6: 21300012
+      cavesofgallet_tiles_42: 21300084
+      cavesofgallet_tiles_29: 21300058
+      cavesofgallet_tiles_67: 21300134
+      cavesofgallet_tiles_69: 21300138
+      cavesofgallet_tiles_75: 21300150
+      cavesofgallet_tiles_24: 21300048
+      cavesofgallet_tiles_61: 21300122
+      cavesofgallet_tiles_87: 21300174
+      cavesofgallet_tiles_53: 21300106
+      cavesofgallet_tiles_91: 21300182
+      cavesofgallet_tiles_47: 21300094
+      cavesofgallet_tiles_49: 21300098
+      cavesofgallet_tiles_82: 21300164
+      cavesofgallet_tiles_11: 21300022
+      cavesofgallet_tiles_12: 21300024
+      cavesofgallet_tiles_25: 21300050
+      cavesofgallet_tiles_58: 21300116
+      cavesofgallet_tiles_51: 21300102
+      cavesofgallet_tiles_55: 21300110
+      cavesofgallet_tiles_76: 21300152
+      cavesofgallet_tiles_80: 21300160
+      cavesofgallet_tiles_35: 21300070
+      cavesofgallet_tiles_32: 21300064
+      cavesofgallet_tiles_43: 21300086
+      cavesofgallet_tiles_14: 21300028
+      cavesofgallet_tiles_68: 21300136
+      cavesofgallet_tiles_72: 21300144
+      cavesofgallet_tiles_84: 21300168
+      cavesofgallet_tiles_56: 21300112
+      cavesofgallet_tiles_64: 21300128
+      cavesofgallet_tiles_0: 21300000
+      cavesofgallet_tiles_40: 21300080
+      cavesofgallet_tiles_5: 21300010
+      cavesofgallet_tiles_57: 21300114
+      cavesofgallet_tiles_20: 21300040
+      cavesofgallet_tiles_36: 21300072
+      cavesofgallet_tiles_63: 21300126
+      cavesofgallet_tiles_83: 21300166
+      cavesofgallet_tiles_8: 21300016
+      cavesofgallet_tiles_79: 21300158
+      cavesofgallet_tiles_46: 21300092
+      cavesofgallet_tiles_28: 21300056
+      cavesofgallet_tiles_81: 21300162
+      cavesofgallet_tiles_17: 21300034
+      cavesofgallet_tiles_60: 21300120
+      cavesofgallet_tiles_7: 21300014
+      cavesofgallet_tiles_22: 21300044
+      cavesofgallet_tiles_41: 21300082
+      cavesofgallet_tiles_89: 21300178
+      cavesofgallet_tiles_92: 21300184
+      cavesofgallet_tiles_3: 21300006
+      cavesofgallet_tiles_31: 21300062
+      cavesofgallet_tiles_86: 21300172
+      cavesofgallet_tiles_39: 21300078
+      cavesofgallet_tiles_15: 21300030
+      cavesofgallet_tiles_23: 21300046
+      cavesofgallet_tiles_27: 21300054
+      cavesofgallet_tiles_50: 21300100
+      cavesofgallet_tiles_77: 21300154
+      cavesofgallet_tiles_4: 21300008
+      cavesofgallet_tiles_71: 21300142
+      cavesofgallet_tiles_74: 21300148
+      cavesofgallet_tiles_48: 21300096
+      cavesofgallet_tiles_16: 21300032
+      cavesofgallet_tiles_33: 21300066
+      cavesofgallet_tiles_30: 21300060
+      cavesofgallet_tiles_2: 21300004
+      cavesofgallet_tiles_19: 21300038
+      cavesofgallet_tiles_90: 21300180
+      cavesofgallet_tiles_9: 21300018
+      cavesofgallet_tiles_44: 21300088
+      cavesofgallet_tiles_34: 21300068
+      cavesofgallet_tiles_54: 21300108
+      cavesofgallet_tiles_52: 21300104
+      cavesofgallet_tiles_59: 21300118
+      cavesofgallet_tiles_66: 21300132
+      cavesofgallet_tiles_65: 21300130
   spritePackingTag: '[TIGHT]'
   pSDRemoveMatte: 0
   pSDShowRemoveMatteOption: 0
